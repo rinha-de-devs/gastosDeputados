@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"regexp"
 	"sync"
+	"time"
 )
 
 func BuscaDeputado() {
@@ -20,10 +21,13 @@ func BuscaDeputado() {
 
 	wg.Add(len(deputados))
 
-	for _, dep := range deputados {
+	for indice, dep := range deputados {
 
+		time.Sleep(1 * time.Second)
 		go func(id string, nome string, partido string, estado string) {
 			defer wg.Done()
+
+			fmt.Printf("Progresso: %d de %d\n", indice, len(deputados))
 
 			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2021&mes=&por=deputado&deputado=%s&uf=&partido=", id)
 
@@ -60,13 +64,13 @@ func BuscaDeputado() {
 			deputado.VerbaDeGabineteGasto = gabineteGasto.verbaGasta
 			deputado.PorcentagemGasto = gabineteGasto.porcentagemGasta
 
-			gabineteDisponivel, err := pegaVerbaDeGabineteDisponível(*doc)
+			gabineteDisponivel, err := pegaVerbaDeGabineteDisponivel(*doc)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			deputado.VerbaDeGabineteDisponoivel = gabineteDisponivel.verbaDisponivel
-			deputado.PorcentagemDisponoivel = gabineteDisponivel.porcentagemDisponivel
+			deputado.VerbaDeGabineteDisponivel = gabineteDisponivel.verbaDisponivel
+			deputado.PorcentagemDisponivel = gabineteDisponivel.porcentagemDisponivel
 
 			deputado.Partido = partido
 			deputado.Estado = estado
@@ -161,10 +165,10 @@ func pegaCota(document goquery.Document) (string, error) {
 }
 
 func pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
-	verbaGasta       string
-	porcentagemGasta string
-}, error) {
-	verbaGasta := document.Find("#js-percentual-gasto > tbody > tr:nth-child(2) > td:nth-child(2)").Text()
+																	verbaGasta       string
+																	porcentagemGasta string
+																}, error) {
+	verbaGasta := document.Find("#js-percentual-gasto > tbody > tr:nth-child(1) > td:nth-child(2)").Text()
 
 	if len(verbaGasta) == 0 {
 		return struct {
@@ -188,11 +192,11 @@ func pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
 	}{verbaGasta, porcentagemGasta}, nil
 }
 
-func pegaVerbaDeGabineteDisponível(document goquery.Document) (struct {
+func pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
 	verbaDisponivel       string
 	porcentagemDisponivel string
 }, error) {
-	verbaDisponivel := document.Find("#js-percentual-gasto > tbody > tr:nth-child(1) > td:nth-child(2)").Text()
+	verbaDisponivel := document.Find("#js-percentual-gasto > tbody > tr:nth-child(2) > td:nth-child(2)").Text()
 
 	if len(verbaDisponivel) == 0 {
 		return struct {

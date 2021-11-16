@@ -5,8 +5,8 @@ type Deputado struct {
 	Partido                    string `json:"partido,omitempty"`
 	Estado                     string `json:"estado,omitempty"`
 	Cota                       string `json:"cota,omitempty"`
-	VerbaDeGabineteDisponoivel string `json:"verba_de_gabinete_disponoivel,omitempty"`
-	PorcentagemDisponoivel     string `json:"porcentagem_disponoivel,omitempty"`
+	VerbaDeGabineteDisponivel string `json:"verba_de_gabinete_disponivel,omitempty"`
+	PorcentagemDisponivel     string `json:"porcentagem_disponivel,omitempty"`
 	VerbaDeGabineteGasto       string `json:"verba_de_gabinete_gasto,omitempty"`
 	PorcentagemGasto           string `json:"porcentagem_gasto,omitempty"`
 }
