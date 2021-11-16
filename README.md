@@ -26,7 +26,7 @@ Golang Version: 1.17
 
     - Tenha certeza que você tem o Go instalado na sua máquina.
 
-## :hammer: Application
+## :hammer: Aplicação
 
 ### Clone o repositório:
 
