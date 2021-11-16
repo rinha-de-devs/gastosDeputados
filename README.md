@@ -46,4 +46,4 @@ Golang Version: 1.17
 
 ### Rode a aplicação:
 
-- No terminal, acesse a pasta cmd e rode o comando `go run main.go`
+- No terminal, acesse a pasta cmd e rode o comando `go run cmd/main.go`
