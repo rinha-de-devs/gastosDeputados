@@ -8,8 +8,9 @@ import "deputySpending/internal/adapter/conexao"
 // 4 passo sanatização de dados
 
 func main() {
+	conn := conexao.DeputadoRepository{}
 
-	conexao.BuscaDeputado()
+	conn.BuscaDeputado(conn.BuscaDeputados)
 
 	//fmt.Printf("%+v\n", deputado)
 

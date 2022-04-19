@@ -1,10 +1,8 @@
 package conexao
 
+import "deputySpending/internal/domain"
+
 type Conexao interface {
-	BuscaDeputado(f func() []struct {
-		nome    string
-		partido string
-		estado  string
-		id      string
-	}) string
+
+	BuscaDeputado(fn func() []domain.DeputadoResponse)
 }

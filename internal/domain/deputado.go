@@ -10,3 +10,10 @@ type Deputado struct {
 	VerbaDeGabineteGasto       string `json:"verba_de_gabinete_gasto,omitempty"`
 	PorcentagemGasto           string `json:"porcentagem_gasto,omitempty"`
 }
+
+type DeputadoResponse struct {
+	Nome    string
+	Partido string
+	Estado  string
+	ID      string
+}

@@ -2,6 +2,7 @@ package conexao
 
 import (
 	"deputySpending/internal/domain"
+	"deputySpending/internal/ports/conexao"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,12 +15,13 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type ConexaoHttp struct{}
+type DeputadoRepository struct {
+	conn *conexao.Conexao
+}
 
-func (c ConexaoHttp) BuscaDeputado(buscaDeputados) {
+func (d DeputadoRepository) BuscaDeputado(fn func() []domain.DeputadoResponse) {
 
-	deputados := buscaDeputados()
-
+	deputados := fn()
 	var wg sync.WaitGroup
 
 	wg.Add(len(deputados))
@@ -52,14 +54,14 @@ func (c ConexaoHttp) BuscaDeputado(buscaDeputados) {
 			var deputado domain.Deputado
 			deputado.Nome = nome
 
-			cota, err := pegaCota(*doc)
+			cota, err := d.pegaCota(*doc)
 			if err != nil {
 				log.Fatal(err, "deputado: ", nome)
 			}
 
 			deputado.Cota = cota
 
-			gabineteGasto, err := pegaVerbaDeGabineteGasto(*doc)
+			gabineteGasto, err := d.pegaVerbaDeGabineteGasto(*doc)
 			if err != nil {
 				log.Fatal(err, "deputado: ", nome)
 			}
@@ -67,7 +69,7 @@ func (c ConexaoHttp) BuscaDeputado(buscaDeputados) {
 			deputado.VerbaDeGabineteGasto = gabineteGasto.verbaGasta
 			deputado.PorcentagemGasto = gabineteGasto.porcentagemGasta
 
-			gabineteDisponivel, err := pegaVerbaDeGabineteDisponivel(*doc)
+			gabineteDisponivel, err := d.pegaVerbaDeGabineteDisponivel(*doc)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -85,7 +87,7 @@ func (c ConexaoHttp) BuscaDeputado(buscaDeputados) {
 
 			fmt.Printf("%s\n", marshal)
 
-		}(dep.id, dep.nome, dep.partido, dep.estado)
+		}(dep.ID, dep.Nome, dep.Partido, dep.Estado)
 
 	}
 
@@ -93,12 +95,8 @@ func (c ConexaoHttp) BuscaDeputado(buscaDeputados) {
 
 }
 
-func (c ConexaoHttp) buscaDeputados() []struct {
-	nome    string
-	partido string
-	estado  string
-	id      string
-} {
+func (d DeputadoRepository) BuscaDeputados() []domain.DeputadoResponse {
+	var deputados []domain.DeputadoResponse
 
 	response, err := http.Get("https://www.camara.leg.br/transparencia/gastos-parlamentares")
 	if err != nil {
@@ -111,13 +109,6 @@ func (c ConexaoHttp) buscaDeputados() []struct {
 	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	var deputados []struct {
-		nome    string
-		partido string
-		estado  string
-		id      string
 	}
 
 	doc.Find("#deputado").Each(func(i int, s *goquery.Selection) {
@@ -133,12 +124,13 @@ func (c ConexaoHttp) buscaDeputados() []struct {
 				partido := partidoEstado[0:2]
 				estado := partidoEstado[len(partidoEstado)-2:]
 
-				deputados = append(deputados, struct {
-					nome    string
-					partido string
-					estado  string
-					id      string
-				}{nome: nome, partido: partido, estado: estado, id: selection.AttrOr("value", "")})
+				deputados = []domain.DeputadoResponse{
+					{
+						Nome: nome,
+						Partido: partido,
+						Estado: estado,
+						ID: selection.AttrOr("value", "")},
+				}
 			}
 		})
 	})
@@ -147,7 +139,7 @@ func (c ConexaoHttp) buscaDeputados() []struct {
 
 }
 
-func (c ConexaoHttp) pegaNome(document goquery.Document) (string, error) {
+func (d DeputadoRepository) pegaNome(document goquery.Document) (string, error) {
 	nome := document.Find("#main-content > section.gastos-form > div.gastos-form__resumo-resposta > div > p > span:nth-child(1)").Text()
 
 	if len(nome) == 0 {
@@ -157,7 +149,7 @@ func (c ConexaoHttp) pegaNome(document goquery.Document) (string, error) {
 	return nome, nil
 }
 
-func (c ConexaoHttp) pegaCota(document goquery.Document) (string, error) {
+func (d DeputadoRepository) pegaCota(document goquery.Document) (string, error) {
 	cota := document.Find("#cota > div > div.l-cota__row > div:nth-child(1) > div > div.l-card.l-cota-resumo > div > div > section > p.gastos__resumo-texto.gastos__resumo-texto--destaque > span").Text()
 
 	if len(cota) == 0 {
@@ -167,7 +159,7 @@ func (c ConexaoHttp) pegaCota(document goquery.Document) (string, error) {
 	return cota, nil
 }
 
-func (c ConexaoHttp) pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
+func (d DeputadoRepository) pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
 	verbaGasta       string
 	porcentagemGasta string
 }, error) {
@@ -195,7 +187,7 @@ func (c ConexaoHttp) pegaVerbaDeGabineteGasto(document goquery.Document) (struct
 	}{verbaGasta, porcentagemGasta}, nil
 }
 
-func (c ConexaoHttp) pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
+func (d DeputadoRepository) pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
 	verbaDisponivel       string
 	porcentagemDisponivel string
 }, error) {

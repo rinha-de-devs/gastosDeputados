@@ -32,12 +32,12 @@ Golang Version: 1.17
 
 ```sh
 # HTTPS
-  $ https://github.com/guilhermegarcia86/gastosDeputados.git
+  $ https://github.com/rinha-de-devs/gastosDeputados.git
 ```
 
 ```sh
 # SSH
-  $ git@github.com:guilhermegarcia86/gastosDeputados.git
+  $ git@github.com:rinha-de-devs/gastosDeputados.git
 ```
 
 ### Baixe as dependências:
