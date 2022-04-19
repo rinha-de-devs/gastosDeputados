@@ -1,5 +1,10 @@
 package conexao
 
 type Conexao interface {
-	BuscaDeputado()string
+	BuscaDeputado(f func() []struct {
+		nome    string
+		partido string
+		estado  string
+		id      string
+	}) string
 }

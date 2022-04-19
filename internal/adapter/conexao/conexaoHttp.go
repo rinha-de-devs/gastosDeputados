@@ -5,15 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
-func BuscaDeputado() {
+type ConexaoHttp struct{}
+
+func (c ConexaoHttp) BuscaDeputado(buscaDeputados) {
 
 	deputados := buscaDeputados()
 
@@ -90,7 +93,7 @@ func BuscaDeputado() {
 
 }
 
-func buscaDeputados() []struct {
+func (c ConexaoHttp) buscaDeputados() []struct {
 	nome    string
 	partido string
 	estado  string
@@ -144,7 +147,7 @@ func buscaDeputados() []struct {
 
 }
 
-func pegaNome(document goquery.Document) (string, error) {
+func (c ConexaoHttp) pegaNome(document goquery.Document) (string, error) {
 	nome := document.Find("#main-content > section.gastos-form > div.gastos-form__resumo-resposta > div > p > span:nth-child(1)").Text()
 
 	if len(nome) == 0 {
@@ -154,7 +157,7 @@ func pegaNome(document goquery.Document) (string, error) {
 	return nome, nil
 }
 
-func pegaCota(document goquery.Document) (string, error) {
+func (c ConexaoHttp) pegaCota(document goquery.Document) (string, error) {
 	cota := document.Find("#cota > div > div.l-cota__row > div:nth-child(1) > div > div.l-card.l-cota-resumo > div > div > section > p.gastos__resumo-texto.gastos__resumo-texto--destaque > span").Text()
 
 	if len(cota) == 0 {
@@ -164,10 +167,10 @@ func pegaCota(document goquery.Document) (string, error) {
 	return cota, nil
 }
 
-func pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
-																	verbaGasta       string
-																	porcentagemGasta string
-																}, error) {
+func (c ConexaoHttp) pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
+	verbaGasta       string
+	porcentagemGasta string
+}, error) {
 	verbaGasta := document.Find("#js-percentual-gasto > tbody > tr:nth-child(1) > td:nth-child(2)").Text()
 
 	if len(verbaGasta) == 0 {
@@ -192,7 +195,7 @@ func pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
 	}{verbaGasta, porcentagemGasta}, nil
 }
 
-func pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
+func (c ConexaoHttp) pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
 	verbaDisponivel       string
 	porcentagemDisponivel string
 }, error) {
