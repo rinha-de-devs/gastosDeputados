@@ -2,7 +2,6 @@ package conexao
 
 import (
 	"deputySpending/internal/domain"
-	"deputySpending/internal/ports/conexao"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,12 +15,11 @@ import (
 )
 
 type DeputadoRepository struct {
-	conn *conexao.Conexao
 }
 
-func (d DeputadoRepository) BuscaDeputado(fn func() []domain.DeputadoResponse) {
+func (d DeputadoRepository) BuscaDeputado(buscaDeputados func() []domain.DeputadoResponse) {
 
-	deputados := fn()
+	deputados := buscaDeputados()
 	var wg sync.WaitGroup
 
 	wg.Add(len(deputados))
@@ -37,14 +35,13 @@ func (d DeputadoRepository) BuscaDeputado(fn func() []domain.DeputadoResponse) {
 			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2021&mes=&por=deputado&deputado=%s&uf=&partido=", id)
 
 			response, err := http.Get(url)
-
-			defer response.Body.Close()
-
 			if err != nil {
 				fmt.Printf("FALHA AO EXECUTAR REQUISICAO %d %s",
 					response.StatusCode, response.Status)
 				panic(err.Error())
 			}
+
+			defer response.Body.Close()
 
 			doc, err := goquery.NewDocumentFromReader(response.Body)
 			if err != nil {
@@ -126,10 +123,10 @@ func (d DeputadoRepository) BuscaDeputados() []domain.DeputadoResponse {
 
 				deputados = []domain.DeputadoResponse{
 					{
-						Nome: nome,
+						Nome:    nome,
 						Partido: partido,
-						Estado: estado,
-						ID: selection.AttrOr("value", "")},
+						Estado:  estado,
+						ID:      selection.AttrOr("value", "")},
 				}
 			}
 		})
@@ -137,16 +134,6 @@ func (d DeputadoRepository) BuscaDeputados() []domain.DeputadoResponse {
 
 	return deputados
 
-}
-
-func (d DeputadoRepository) pegaNome(document goquery.Document) (string, error) {
-	nome := document.Find("#main-content > section.gastos-form > div.gastos-form__resumo-resposta > div > p > span:nth-child(1)").Text()
-
-	if len(nome) == 0 {
-		return "", errors.New("Nome não encontrado")
-	}
-
-	return nome, nil
 }
 
 func (d DeputadoRepository) pegaCota(document goquery.Document) (string, error) {
