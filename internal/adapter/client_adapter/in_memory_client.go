@@ -1,4 +1,4 @@
-package client
+package client_adapter
 
 import "deputySpending/internal/domain"
 
@@ -10,7 +10,7 @@ func New() *inMemoryClient {
 	return &inMemoryClient{
 		deputies: []domain.Deputy{
 			{
-				ID:                        "",
+				ID:                        "1",
 				Nome:                      "POLITICO",
 				Partido:                   "PARTIDO",
 				Estado:                    "",

@@ -48,7 +48,7 @@ func (d DeputadoRepository) BuscaDeputado(buscaDeputados func() []domain.Deputad
 				log.Fatal(err)
 			}
 
-			var deputado domain.Deputado
+			var deputado domain.Deputy
 			deputado.Nome = nome
 
 			cota, err := d.pegaCota(*doc)

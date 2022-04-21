@@ -1,4 +1,4 @@
-package repository
+package repository_adapter
 
 import (
 	"deputySpending/internal/domain"
