@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+  postgres:
+      image: postgres
+      restart: always
+      environment:
+        - POSTGRES_USER=rinha
+        - POSTGRES_PASSWORD=rinha
+        - POSTGRES_DB=rinha
+      logging:
+        options:
+          max-size: 10m
+          max-file: "3"
+      ports:
+        - '5432:5432'      
+        

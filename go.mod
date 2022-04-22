@@ -4,6 +4,8 @@ go 1.17
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/joho/godotenv v1.4.0
+	github.com/lib/pq v1.10.5
 	github.com/stretchr/testify v1.7.1
 )
 
