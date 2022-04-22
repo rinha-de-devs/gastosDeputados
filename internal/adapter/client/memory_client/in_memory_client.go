@@ -1,4 +1,4 @@
-package client_adapter
+package memory_client
 
 import "deputySpending/internal/domain"
 
@@ -24,10 +24,10 @@ func New() *inMemoryClient {
 	}
 }
 
-func (c *inMemoryClient) SearchDeputySlice() ([]domain.Deputy, error) {
-	return c.deputies, nil
+func (repo *inMemoryClient) SearchDeputySlice() ([]domain.Deputy, error) {
+	return repo.deputies, nil
 }
 
-func (c *inMemoryClient) ScrappingDeputies(deputies []domain.Deputy) ([]domain.Deputy, error) {
+func (repo *inMemoryClient) ScrappingDeputies(deputies []domain.Deputy) ([]domain.Deputy, error) {
 	return deputies, nil
 }

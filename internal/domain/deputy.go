@@ -1,7 +1,7 @@
 package domain
 
 type Deputy struct {
-	ID                        string `json:"-"`
+	ID                        string `json:"id,omitempty"`
 	Nome                      string `json:"nome,omitempty"`
 	Partido                   string `json:"partido,omitempty"`
 	Estado                    string `json:"estado,omitempty"`
@@ -10,11 +10,4 @@ type Deputy struct {
 	PorcentagemDisponivel     string `json:"porcentagem_disponivel,omitempty"`
 	VerbaDeGabineteGasto      string `json:"verba_de_gabinete_gasto,omitempty"`
 	PorcentagemGasto          string `json:"porcentagem_gasto,omitempty"`
-}
-
-type DeputadoResponse struct {
-	Nome    string
-	Partido string
-	Estado  string
-	ID      string
 }

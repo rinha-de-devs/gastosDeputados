@@ -1,4 +1,4 @@
-package conexao
+package scrapping_adapter
 
 import (
 	"deputySpending/internal/domain"
@@ -14,23 +14,71 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type DeputadoRepository struct {
+type scrappingClient struct {
+	deputies []domain.Deputy
 }
 
-func (d DeputadoRepository) BuscaDeputado(buscaDeputados func() []domain.DeputadoResponse) {
+func New() *scrappingClient {
+	return &scrappingClient{
+		deputies: []domain.Deputy{},
+	}
+}
 
-	deputados := buscaDeputados()
+func (scrapping *scrappingClient) SearchDeputySlice() ([]domain.Deputy, error) {
+
+	response, err := http.Get("https://www.camara.leg.br/transparencia/gastos-parlamentares")
+	if err != nil {
+		fmt.Printf("FAIL TO PERFORM REQUEST %d %s",
+			response.StatusCode, response.Status)
+		panic(err.Error())
+	}
+	defer response.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doc.Find("#deputado").Each(func(i int, s *goquery.Selection) {
+		s.Find("option").Each(func(i int, selection *goquery.Selection) {
+			if len(selection.AttrOr("value", "")) != 0 {
+
+				rgx := regexp.MustCompile(`\S+\s\S+`)
+				nome := rgx.FindString(selection.Text())
+
+				rgx = regexp.MustCompile(`\(([^)]+)\)`)
+				submatch := rgx.FindStringSubmatch(selection.Text())
+				partidoEstado := submatch[1]
+				partido := partidoEstado[0:2]
+				estado := partidoEstado[len(partidoEstado)-2:]
+
+				scrapping.deputies = []domain.Deputy{
+					{
+						Nome:    nome,
+						Partido: partido,
+						Estado:  estado,
+						ID:      selection.AttrOr("value", "")},
+				}
+			}
+		})
+	})
+
+	return scrapping.deputies, nil
+}
+
+func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([]domain.Deputy, error) {
+
 	var wg sync.WaitGroup
 
-	wg.Add(len(deputados))
+	wg.Add(len(deputies))
 
-	for indice, dep := range deputados {
+	for indice, dep := range deputies {
 
 		time.Sleep(1 * time.Second)
 		go func(id string, nome string, partido string, estado string) {
 			defer wg.Done()
 
-			fmt.Printf("Progresso: %d de %d\n", indice, len(deputados))
+			fmt.Printf("Progresso: %d de %d\n", indice, len(deputies))
 
 			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2021&mes=&por=deputado&deputado=%s&uf=&partido=", id)
 
@@ -51,14 +99,14 @@ func (d DeputadoRepository) BuscaDeputado(buscaDeputados func() []domain.Deputad
 			var deputado domain.Deputy
 			deputado.Nome = nome
 
-			cota, err := d.pegaCota(*doc)
+			cota, err := scrapping.pegaCota(*doc)
 			if err != nil {
 				log.Fatal(err, "deputado: ", nome)
 			}
 
 			deputado.Cota = cota
 
-			gabineteGasto, err := d.pegaVerbaDeGabineteGasto(*doc)
+			gabineteGasto, err := scrapping.pegaVerbaDeGabineteGasto(*doc)
 			if err != nil {
 				log.Fatal(err, "deputado: ", nome)
 			}
@@ -66,7 +114,7 @@ func (d DeputadoRepository) BuscaDeputado(buscaDeputados func() []domain.Deputad
 			deputado.VerbaDeGabineteGasto = gabineteGasto.verbaGasta
 			deputado.PorcentagemGasto = gabineteGasto.porcentagemGasta
 
-			gabineteDisponivel, err := d.pegaVerbaDeGabineteDisponivel(*doc)
+			gabineteDisponivel, err := scrapping.pegaVerbaDeGabineteDisponivel(*doc)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -90,53 +138,10 @@ func (d DeputadoRepository) BuscaDeputado(buscaDeputados func() []domain.Deputad
 
 	wg.Wait()
 
+	return scrapping.deputies, nil
 }
 
-func (d DeputadoRepository) BuscaDeputados() []domain.DeputadoResponse {
-	var deputados []domain.DeputadoResponse
-
-	response, err := http.Get("https://www.camara.leg.br/transparencia/gastos-parlamentares")
-	if err != nil {
-		fmt.Printf("FALHA AO EXECUTAR REQUISICAO %d %s",
-			response.StatusCode, response.Status)
-		panic(err.Error())
-	}
-	defer response.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	doc.Find("#deputado").Each(func(i int, s *goquery.Selection) {
-		s.Find("option").Each(func(i int, selection *goquery.Selection) {
-			if len(selection.AttrOr("value", "")) != 0 {
-
-				rgx := regexp.MustCompile("\\S+\\s\\S+")
-				nome := rgx.FindString(selection.Text())
-
-				rgx = regexp.MustCompile("\\(([^)]+)\\)")
-				submatch := rgx.FindStringSubmatch(selection.Text())
-				partidoEstado := submatch[1]
-				partido := partidoEstado[0:2]
-				estado := partidoEstado[len(partidoEstado)-2:]
-
-				deputados = []domain.DeputadoResponse{
-					{
-						Nome:    nome,
-						Partido: partido,
-						Estado:  estado,
-						ID:      selection.AttrOr("value", "")},
-				}
-			}
-		})
-	})
-
-	return deputados
-
-}
-
-func (d DeputadoRepository) pegaCota(document goquery.Document) (string, error) {
+func (scrapping *scrappingClient) pegaCota(document goquery.Document) (string, error) {
 	cota := document.Find("#cota > div > div.l-cota__row > div:nth-child(1) > div > div.l-card.l-cota-resumo > div > div > section > p.gastos__resumo-texto.gastos__resumo-texto--destaque > span").Text()
 
 	if len(cota) == 0 {
@@ -146,7 +151,7 @@ func (d DeputadoRepository) pegaCota(document goquery.Document) (string, error) 
 	return cota, nil
 }
 
-func (d DeputadoRepository) pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
+func (scrapping *scrappingClient) pegaVerbaDeGabineteGasto(document goquery.Document) (struct {
 	verbaGasta       string
 	porcentagemGasta string
 }, error) {
@@ -174,7 +179,7 @@ func (d DeputadoRepository) pegaVerbaDeGabineteGasto(document goquery.Document) 
 	}{verbaGasta, porcentagemGasta}, nil
 }
 
-func (d DeputadoRepository) pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
+func (scrapping *scrappingClient) pegaVerbaDeGabineteDisponivel(document goquery.Document) (struct {
 	verbaDisponivel       string
 	porcentagemDisponivel string
 }, error) {

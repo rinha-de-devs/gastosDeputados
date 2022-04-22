@@ -1,8 +1,8 @@
 package service_test
 
 import (
-	"deputySpending/internal/adapter/client_adapter"
-	"deputySpending/internal/adapter/repository_adapter"
+	"deputySpending/internal/adapter/client/memory_client"
+	"deputySpending/internal/adapter/repository/memory_repository"
 	"deputySpending/internal/service"
 	"testing"
 
@@ -10,7 +10,7 @@ import (
 )
 
 func TestSearchExpendDeputy(t *testing.T) {
-	service := service.New(repository_adapter.New(), client_adapter.New())
+	service := service.New(memory_repository.New(), memory_client.New())
 
 	deputies := service.SearchExpendDeputy()
 

@@ -1,4 +1,4 @@
-package repository_adapter
+package memory_repository
 
 import (
 	"deputySpending/internal/domain"
