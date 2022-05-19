@@ -52,13 +52,13 @@ func (scrapping *scrappingClient) SearchDeputySlice() ([]domain.Deputy, error) {
 				partido := partidoEstado[0:2]
 				estado := partidoEstado[len(partidoEstado)-2:]
 
-				scrapping.deputies = []domain.Deputy{
-					{
-						Nome:    nome,
-						Partido: partido,
-						Estado:  estado,
-						ID:      selection.AttrOr("value", "")},
-				}
+				tempDeputy := domain.Deputy{
+					Nome:    nome,
+					Partido: partido,
+					Estado:  estado,
+					ID:      selection.AttrOr("value", "")}
+
+				scrapping.deputies = append(scrapping.deputies, tempDeputy)
 			}
 		})
 	})
@@ -80,7 +80,7 @@ func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([
 
 			fmt.Printf("Progresso: %d de %d\n", indice, len(deputies))
 
-			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2021&mes=&por=deputado&deputado=%s&uf=&partido=", id)
+			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2020&mes=&por=deputado&deputado=%s&uf=&partido=", id)
 
 			response, err := http.Get(url)
 			if err != nil {
