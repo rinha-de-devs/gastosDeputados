@@ -11,14 +11,14 @@ func New() *inMemoryClient {
 		deputies: []domain.Deputy{
 			{
 				ID:                        "1",
-				Nome:                      "POLITICO",
+				Nome:                      "DEPUTADO",
 				Partido:                   "PARTIDO",
-				Estado:                    "",
-				Cota:                      "",
-				VerbaDeGabineteDisponivel: "",
-				PorcentagemDisponivel:     "",
-				VerbaDeGabineteGasto:      "",
-				PorcentagemGasto:          "",
+				Estado:                    "MG",
+				Cota:                      "R$ 341.450,44",
+				VerbaDeGabineteDisponivel: "19.121,73",
+				PorcentagemDisponivel:     "1,43%",
+				VerbaDeGabineteGasto:      "1.320.985,35",
+				PorcentagemGasto:          "98,57%",
 			},
 		},
 	}

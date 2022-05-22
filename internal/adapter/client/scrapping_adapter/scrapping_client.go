@@ -3,7 +3,6 @@ package scrapping_adapter
 import (
 	"deputySpending/internal/domain"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -72,15 +71,15 @@ func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([
 
 	wg.Add(len(deputies))
 
-	for indice, dep := range deputies {
+	for index := range deputies {
 
 		time.Sleep(1 * time.Second)
-		go func(id string, nome string, partido string, estado string) {
+		go func(index int) {
 			defer wg.Done()
 
-			fmt.Printf("Progresso: %d de %d\n", indice, len(deputies))
+			fmt.Printf("Progresso: %d de %d\n", index, len(deputies))
 
-			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2020&mes=&por=deputado&deputado=%s&uf=&partido=", id)
+			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2021&mes=&por=deputado&deputado=%s&uf=&partido=", deputies[index].ID)
 
 			response, err := http.Get(url)
 			if err != nil {
@@ -96,56 +95,50 @@ func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([
 				log.Fatal(err)
 			}
 
-			var deputado domain.Deputy
-			deputado.Nome = nome
-
 			cota, err := scrapping.pegaCota(*doc)
 			if err != nil {
-				log.Fatal(err, "deputado: ", nome)
+				log.Fatal(err, "deputado: ", deputies[index].Nome)
 			}
 
-			deputado.Cota = cota
+			deputies[index].Cota = cota
 
 			gabineteGasto, err := scrapping.pegaVerbaDeGabineteGasto(*doc)
 			if err != nil {
-				log.Fatal(err, "deputado: ", nome)
+				log.Fatal(err, "deputado: ", deputies[index].Nome)
 			}
 
-			deputado.VerbaDeGabineteGasto = gabineteGasto.verbaGasta
-			deputado.PorcentagemGasto = gabineteGasto.porcentagemGasta
+			deputies[index].VerbaDeGabineteGasto = gabineteGasto.verbaGasta
+			deputies[index].PorcentagemGasto = gabineteGasto.porcentagemGasta
 
 			gabineteDisponivel, err := scrapping.pegaVerbaDeGabineteDisponivel(*doc)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			deputado.VerbaDeGabineteDisponivel = gabineteDisponivel.verbaDisponivel
-			deputado.PorcentagemDisponivel = gabineteDisponivel.porcentagemDisponivel
+			deputies[index].VerbaDeGabineteDisponivel = gabineteDisponivel.verbaDisponivel
+			deputies[index].PorcentagemDisponivel = gabineteDisponivel.porcentagemDisponivel
 
-			deputado.Partido = partido
-			deputado.Estado = estado
-
-			marshal, err := json.MarshalIndent(deputado, "", "")
+			marshal, err := json.MarshalIndent(deputies[index], "", "")
 			if err != nil {
 				log.Fatalln(err.Error())
 			}
 
 			fmt.Printf("%s\n", marshal)
 
-		}(dep.ID, dep.Nome, dep.Partido, dep.Estado)
+		}(index)
 
 	}
 
 	wg.Wait()
 
-	return scrapping.deputies, nil
+	return deputies, nil
 }
 
 func (scrapping *scrappingClient) pegaCota(document goquery.Document) (string, error) {
 	cota := document.Find("#cota > div > div.l-cota__row > div:nth-child(1) > div > div.l-card.l-cota-resumo > div > div > section > p.gastos__resumo-texto.gastos__resumo-texto--destaque > span").Text()
 
 	if len(cota) == 0 {
-		return "", errors.New("Cota não encontrada")
+		cota = "0"
 	}
 
 	return cota, nil
@@ -158,19 +151,13 @@ func (scrapping *scrappingClient) pegaVerbaDeGabineteGasto(document goquery.Docu
 	verbaGasta := document.Find("#js-percentual-gasto > tbody > tr:nth-child(1) > td:nth-child(2)").Text()
 
 	if len(verbaGasta) == 0 {
-		return struct {
-			verbaGasta       string
-			porcentagemGasta string
-		}{}, errors.New("Verba Gasta não encontrada")
+		verbaGasta = "0"
 	}
 
 	porcentagemGasta := document.Find("#js-percentual-gasto > tbody > tr:nth-child(1) > td:nth-child(3)").Text()
 
 	if len(porcentagemGasta) == 0 {
-		return struct {
-			verbaGasta       string
-			porcentagemGasta string
-		}{}, errors.New("Porcentagem Gasta não encontrada")
+		porcentagemGasta = "0"
 	}
 
 	return struct {
@@ -186,19 +173,13 @@ func (scrapping *scrappingClient) pegaVerbaDeGabineteDisponivel(document goquery
 	verbaDisponivel := document.Find("#js-percentual-gasto > tbody > tr:nth-child(2) > td:nth-child(2)").Text()
 
 	if len(verbaDisponivel) == 0 {
-		return struct {
-			verbaDisponivel       string
-			porcentagemDisponivel string
-		}{}, errors.New("Verba Disponivel não encontrada")
+		verbaDisponivel = "0"
 	}
 
 	porcentagemDisponivel := document.Find("#js-percentual-gasto > tbody > tr:nth-child(2) > td:nth-child(3)").Text()
 
 	if len(porcentagemDisponivel) == 0 {
-		return struct {
-			verbaDisponivel       string
-			porcentagemDisponivel string
-		}{}, errors.New("Porcentagem Disponivel não encontrada")
+		porcentagemDisponivel = "0"
 	}
 
 	return struct {

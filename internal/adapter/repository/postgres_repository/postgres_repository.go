@@ -29,7 +29,7 @@ func (repo *postgresDB) SaveDeputy(deputy domain.Deputy) (domain.Deputy, error) 
 	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);
 	`
 
-	err := db.QueryRow(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto).Scan()
+	_, err := db.Exec(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto)
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
 		return domain.Deputy{}, err
@@ -41,9 +41,9 @@ func (repo *postgresDB) SaveDeputy(deputy domain.Deputy) (domain.Deputy, error) 
 
 func createConnection() *sql.DB {
 
-	err := godotenv.Load(".env")
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error to load env file")
+		log.Fatalf("Error to load env file: %s", err.Error())
 	}
 
 	var (
