@@ -19,6 +19,7 @@ func New() *inMemoryClient {
 				PorcentagemDisponivel:     "1,43%",
 				VerbaDeGabineteGasto:      "1.320.985,35",
 				PorcentagemGasto:          "98,57%",
+				Ano:                       "2021",
 			},
 		},
 	}
@@ -28,6 +29,6 @@ func (repo *inMemoryClient) SearchDeputySlice() ([]domain.Deputy, error) {
 	return repo.deputies, nil
 }
 
-func (repo *inMemoryClient) ScrappingDeputies(deputies []domain.Deputy) ([]domain.Deputy, error) {
+func (repo *inMemoryClient) ScrappingDeputies(deputies []domain.Deputy, year string) ([]domain.Deputy, error) {
 	return deputies, nil
 }

@@ -24,18 +24,17 @@ func (repo *postgresDB) SaveDeputy(deputy domain.Deputy) (domain.Deputy, error) 
 
 	defer db.Close()
 
-	sqlStatement := `INSERT INTO public.deputy 
-	(id, nome, partido, estado, cota, verba_de_gabinete_disponivel, porcentagem_disponivel, verba_de_gabinete_gasto, porcentagem_gasto)
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);
-	`
-
-	_, err := db.Exec(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto)
+	deputyRows, err := selectByIDAndYear(deputy.ID, deputy.Ano, db)
 	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute selectByIDAndYear function. %v", err)
 		return domain.Deputy{}, err
 	}
 
-	return deputy, nil
+	if len(deputyRows) > 0 {
+		return update(deputy, db)
+	}
+
+	return insert(deputy, db)
 
 }
 
@@ -73,40 +72,67 @@ func createConnection() *sql.DB {
 	return db
 }
 
-// func insert(deputy domain.Deputy, db *sql.DB) (domain.Deputy, error) {
-// 	sqlStatement := `INSERT INTO public.deputy
-// 	(id, nome, partido, estado, cota, verba_de_gabinete_disponivel, porcentagem_disponivel, verba_de_gabinete_gasto, porcentagem_gasto)
-// 	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);
-// 	`
+func selectByIDAndYear(id string, year string, db *sql.DB) ([]domain.Deputy, error) {
+	sqlStatement := `SELECT * FROM public.deputy WHERE id = $1 AND ano = $2`
 
-// 	err := db.QueryRow(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto).Scan()
-// 	if err != nil {
-// 		log.Fatalf("Unable to execute the query. %v", err)
-// 		return domain.Deputy{}, err
-// 	}
+	rows, err := db.Query(sqlStatement, id, year)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return deputy, nil
-// }
+	defer rows.Close()
 
-// func update(deputy domain.Deputy, db *sql.DB) (domain.Deputy, error) {
-// 	sqlStatement := `UPDATE public.deputy
-// 	SET nome=$2, partido=$3, estado=$4, cota=$5, verba_de_gabinete_disponivel=$6, porcentagem_disponivel=$7, verba_de_gabinete_gasto=$8, porcentagem_gasto=$9
-// 	WHERE id=$1
-// 	`
+	deputies := []domain.Deputy{}
 
-// 	result, err := db.Exec(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto)
-// 	if err != nil {
-// 		log.Fatalf("Unable to execute the query. %v", err)
-// 		return domain.Deputy{}, err
-// 	}
+	for rows.Next() {
+		var deputy = domain.Deputy{}
 
-// 	rowsAffected, err := result.RowsAffected()
-// 	if err != nil {
-// 		log.Fatalf("Error while checking the affected rows. %v", err)
-// 		return domain.Deputy{}, err
-// 	}
+		err := rows.Scan(&deputy.ID, &deputy.Nome, &deputy.Cota, &deputy.Estado, &deputy.Partido, &deputy.PorcentagemDisponivel, &deputy.PorcentagemGasto, &deputy.VerbaDeGabineteDisponivel, &deputy.VerbaDeGabineteGasto, &deputy.Ano)
+		if err != nil {
+			return nil, err
+		}
 
-// 	fmt.Printf("Total rows/record affected %v", rowsAffected)
+		deputies = append(deputies, deputy)
+	}
 
-// 	return deputy, nil
-// }
+	return deputies, nil
+
+}
+
+func insert(deputy domain.Deputy, db *sql.DB) (domain.Deputy, error) {
+	sqlStatement := `INSERT INTO public.deputy
+	(id, nome, partido, estado, cota, verba_de_gabinete_disponivel, porcentagem_disponivel, verba_de_gabinete_gasto, porcentagem_gasto, ano)
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+	`
+
+	_, err := db.Exec(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto, deputy.Ano)
+	if err != nil {
+		log.Fatalf("Unable to execute the insert. %v", err)
+		return domain.Deputy{}, err
+	}
+
+	return deputy, nil
+}
+
+func update(deputy domain.Deputy, db *sql.DB) (domain.Deputy, error) {
+	sqlStatement := `UPDATE public.deputy
+	SET nome=$2, partido=$3, estado=$4, cota=$5, verba_de_gabinete_disponivel=$6, porcentagem_disponivel=$7, verba_de_gabinete_gasto=$8, porcentagem_gasto=$9, ano=$10
+	WHERE id=$1
+	`
+
+	result, err := db.Exec(sqlStatement, deputy.ID, deputy.Nome, deputy.Partido, deputy.Estado, deputy.Cota, deputy.VerbaDeGabineteDisponivel, deputy.PorcentagemDisponivel, deputy.VerbaDeGabineteGasto, deputy.PorcentagemGasto, deputy.Ano)
+	if err != nil {
+		log.Fatalf("Unable to execute the update. %v", err)
+		return domain.Deputy{}, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Fatalf("Error while checking the affected rows. %v", err)
+		return domain.Deputy{}, err
+	}
+
+	fmt.Printf("Total rows/record affected %v", rowsAffected)
+
+	return deputy, nil
+}

@@ -19,14 +19,14 @@ func New(deputadoRepository repository.Repository, deputadoClient client.Client)
 	}
 }
 
-func (s *service) SearchExpendDeputy() []domain.Deputy {
+func (s *service) SearchExpendDeputy(year string) []domain.Deputy {
 	deputies, err := s.deputadoClient.SearchDeputySlice()
 	if err != nil {
 		fmt.Printf("ERROR TO SEARCH DEPUTIES SLICE")
 		panic(err.Error())
 	}
 
-	deps, err := s.deputadoClient.ScrappingDeputies(deputies)
+	deps, err := s.deputadoClient.ScrappingDeputies(deputies, year)
 	if err != nil {
 		fmt.Printf("ERROR TO SCRAPPING DEPUTIES")
 		panic(err.Error())

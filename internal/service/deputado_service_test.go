@@ -12,7 +12,7 @@ import (
 func TestSearchExpendDeputy(t *testing.T) {
 	service := service.New(memory_repository.New(), memory_client.New())
 
-	deputies := service.SearchExpendDeputy()
+	deputies := service.SearchExpendDeputy("2021")
 
 	assert.Len(t, deputies, 1)
 	assert.Equal(t, "1", deputies[0].ID)

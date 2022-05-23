@@ -10,4 +10,5 @@ type Deputy struct {
 	PorcentagemDisponivel     string `json:"porcentagem_disponivel,omitempty"`
 	VerbaDeGabineteGasto      string `json:"verba_de_gabinete_gasto,omitempty"`
 	PorcentagemGasto          string `json:"porcentagem_gasto,omitempty"`
+	Ano                       string `json:"ano,omitempty"`
 }

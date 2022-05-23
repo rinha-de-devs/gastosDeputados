@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -47,8 +48,9 @@ func (scrapping *scrappingClient) SearchDeputySlice() ([]domain.Deputy, error) {
 
 				rgx = regexp.MustCompile(`\(([^)]+)\)`)
 				submatch := rgx.FindStringSubmatch(selection.Text())
-				partidoEstado := submatch[1]
-				partido := partidoEstado[0:2]
+				split := strings.Split(submatch[1], "-")
+				partidoEstado := split[1]
+				partido := split[0]
 				estado := partidoEstado[len(partidoEstado)-2:]
 
 				tempDeputy := domain.Deputy{
@@ -65,7 +67,7 @@ func (scrapping *scrappingClient) SearchDeputySlice() ([]domain.Deputy, error) {
 	return scrapping.deputies, nil
 }
 
-func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([]domain.Deputy, error) {
+func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy, year string) ([]domain.Deputy, error) {
 
 	var wg sync.WaitGroup
 
@@ -79,7 +81,7 @@ func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([
 
 			fmt.Printf("Progresso: %d de %d\n", index, len(deputies))
 
-			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=2021&mes=&por=deputado&deputado=%s&uf=&partido=", deputies[index].ID)
+			url := fmt.Sprintf("https://www.camara.leg.br/transparencia/gastos-parlamentares?legislatura=&ano=%s&mes=&por=deputado&deputado=%s&uf=&partido=", year, deputies[index].ID)
 
 			response, err := http.Get(url)
 			if err != nil {
@@ -89,6 +91,8 @@ func (scrapping *scrappingClient) ScrappingDeputies(deputies []domain.Deputy) ([
 			}
 
 			defer response.Body.Close()
+
+			deputies[index].Ano = year
 
 			doc, err := goquery.NewDocumentFromReader(response.Body)
 			if err != nil {

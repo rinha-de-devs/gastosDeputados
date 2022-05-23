@@ -8,6 +8,6 @@ import (
 
 func main() {
 
-	service.New(postgres_repository.New(), scrapping_adapter.New()).SearchExpendDeputy()
+	service.New(postgres_repository.New(), scrapping_adapter.New()).SearchExpendDeputy("2022")
 
 }

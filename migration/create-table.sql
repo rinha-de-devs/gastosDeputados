@@ -1,5 +1,5 @@
 CREATE TABLE public.deputy (
-	id varchar NOT NULL,
+	id varchar,
 	nome varchar NOT NULL,
 	partido varchar NOT NULL,
 	estado varchar NOT NULL,
@@ -7,5 +7,6 @@ CREATE TABLE public.deputy (
 	verba_de_gabinete_disponivel varchar NOT NULL,
 	porcentagem_disponivel varchar NOT NULL,
 	verba_de_gabinete_gasto varchar NOT NULL,
-	porcentagem_gasto varchar NOT NULL
+	porcentagem_gasto varchar NOT NULL,
+	ano varchar NOT NULL
 );

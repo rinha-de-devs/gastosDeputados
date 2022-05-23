@@ -47,3 +47,7 @@ Golang Version: 1.17
 ### Rode a aplicação:
 
 - No terminal, acesse a pasta cmd e rode o comando `go run cmd/main.go`
+
+### Rodando testes
+
+- No terminal execute o comando `go test -v ./internal/service/`
